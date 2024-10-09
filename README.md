@@ -2,14 +2,14 @@
 
 ## Overview
 
-This backend API provides user registration functionality with Auth0 authentication integration and MongoDB data storage. It's built using Go and the Gin web framework.
+This backend API provides user registration functionality with Auth0 authentication integration and sqlite data storage. It's built using Go and the Gin web framework.
 
 ## Features
 
 - User registration with first name, last name, email and password
 - Input validation and error handling
 - Integration with Auth0 for secure authentication
-- Data persistence in MongoDB
+- Data persistence in sqlite
 - Prevention of duplicate user registrations
 
 ## Prerequisites
