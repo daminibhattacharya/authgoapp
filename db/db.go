@@ -2,54 +2,64 @@ package db
 
 import (
 	"auth-go-app/models"
-	"context"
+	"database/sql"
 	"fmt"
 	"os"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	_ "modernc.org/sqlite" //- here registers sql lite driver with database/sql package
 )
 
-var Client *mongo.Client
+var context *sql.DB
 
 func Init() error {
-	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-	clientOptions := options.Client().ApplyURI(os.Getenv("MONGO_URI")).SetServerAPIOptions(serverAPI)
 	var err error
-	Client, err = mongo.Connect(context.TODO(), clientOptions)
+	context, err = sql.Open("sqlite", os.Getenv("SQLITE_DB_PATH"))
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("error opening database: %v", err)
 	}
+	_, err = context.Exec(`
+		CREATE TABLE IF NOT EXISTS users (
+			id TEXT PRIMARY KEY,
+			firstname TEXT,
+			lastname TEXT,
+			email TEXT UNIQUE,
+			password TEXT,
+			created_at DATETIME
+		)
+	`)
+	if err != nil {
+		return fmt.Errorf("error creating users table: %v", err)
+	}
+
 	return nil
 }
-func Close() {
-	defer func() {
-		if err := Client.Disconnect(context.TODO()); err != nil {
-			panic(err)
-		}
-	}()
-}
-func CheckIfUserExists(email string) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-	collection := Client.Database("userdb").Collection("users")
-	filter := bson.M{"email": email}
 
-	count, err := collection.CountDocuments(ctx, filter)
+func Close() {
+	if context != nil {
+		context.Close()
+	}
+}
+
+func CheckIfUserExists(email string) bool {
+	var count int
+	err := context.QueryRow("SELECT COUNT(*) FROM users WHERE email = ?", email).Scan(&count)
 	if err != nil {
-		fmt.Println("error")
+		fmt.Printf("Error checking if user exists: %v\n", err)
+		return false
 	}
 	return count > 0
 }
-func Save(u *models.User) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	collection := Client.Database("userdb").Collection("users")
-	u.CreatedAt = time.Now()
-	
 
-	_, dbError := collection.InsertOne(ctx, u)
-	return dbError
+func Save(u *models.User) error {
+	u.CreatedAt = time.Now()
+	_, err := context.Exec(`
+		INSERT INTO users (id, firstname, lastname, email, password, created_at)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`, u.ID, u.FirstName, u.LastName, u.Email, u.Password, u.CreatedAt)
+
+	if err != nil {
+		return fmt.Errorf("error saving user: %v", err)
+	}
+	return nil
 }

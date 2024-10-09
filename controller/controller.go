@@ -53,7 +53,7 @@ func RegisterUser(ctx *gin.Context) {
 	}
 
 	if data.StatusCode > 0 {
-		ctx.JSON(data.StatusCode, gin.H{"message": "Error from Auth0: " + data.Message + data.Policy})
+		ctx.JSON(data.StatusCode, gin.H{"message": "Error from Auth0: " + data.Message})
 		return
 	}
 
