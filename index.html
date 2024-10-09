@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Registration Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        body h1 {
+            text-align: center;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-top: 10px;
+        }
+
+        input {
+            padding: 5px;
+            margin-top: 5px;
+        }
+
+        button {
+            margin-top: 20px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .password-container {
+            margin-bottom: 20px;
+        }
+
+        .password-requirements {
+            font-size: 0.9em;
+            color: #666;
+            white-space: pre-line;
+            background-color: #f8f8f8;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            padding: 10px
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Under Engineered Registration Form</h1>
+    <form id="registrationForm">
+        <label for="firstname">Vorname:</label>
+        <input type="text" id="firstname" name="firstname" required />
+
+        <label for="lastname">Nachname:</label>
+        <input type="text" id="lastname" name="lastname" required />
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required />
+
+        <div class="password-container">
+            <p class="password-requirements">
+                - At least 8 characters in length<br>
+                - Contain at least 3 of the following 4 types of characters:<br>
+                &nbsp;&nbsp;- lower case letters (a-z)<br>
+                &nbsp;&nbsp;- upper case letters (A-Z)<br>
+                &nbsp;&nbsp;- numbers (i.e. 0-9)<br>
+                &nbsp;&nbsp;- special characters (e.g. !@#$%^&*)
+            </p>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required />
+        </div>
+
+        <button type="submit">Register</button>
+    </form>
+
+    <script>
+        document
+            .getElementById("registrationForm")
+            .addEventListener("submit", async function (event) {
+                event.preventDefault();
+
+                const formData = {
+                    firstname: document.getElementById("firstname").value,
+                    lastname: document.getElementById("lastname").value,
+                    email: document.getElementById("email").value,
+                    password: document.getElementById("password").value,
+                };
+
+                try {
+                    const r = await fetch("http://localhost:8080/register", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(formData),
+                    });
+
+                    const data = await r.json();
+
+                    if (r.status === 200) {
+                        console.log("Success:", data);
+                        alert("Registration successful!");
+                        document.getElementById("registrationForm").reset();
+                    } else if (r.status === 400) {
+                        console.log("Bad Request:", data);
+                        alert("Registration failed: " + (data.message || "Bad Request"));
+                    } else {
+                        console.log("Unexpected status:", data);
+                        alert("Unexpected response from server");
+                    }
+                } catch (error) {
+                    console.error("Error:", error);
+                    alert("Registration failed. Please try again.");
+                }
+            });
+    </script>
+</body>
+
+</html>
